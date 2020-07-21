@@ -71,4 +71,4 @@ if [ $single_gpu = 1 ]; then
     export CUDA_VISIBLE_DEVICES=0
 fi
 
-$PREFIX train.py --model resnet50 -b 32 -j 4 --data-path $DATASET_DIR $SUFFIX 2>&1 |tee log
+$PREFIX main.py -a resnet50 -b 32 -j 4 $DATASET_DIR $SUFFIX 2>&1 |tee log
