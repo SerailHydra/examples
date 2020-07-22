@@ -274,6 +274,7 @@ def profile_train(train_loader, model, criterion, optimizer, epoch, args):
     # switch to train mode
     model.train()
 
+    end = time.time()
     for i, (images, target) in enumerate(train_loader):
         if i == args.profile_start:
             start_cupti_tracing()
@@ -295,13 +296,10 @@ def profile_train(train_loader, model, criterion, optimizer, epoch, args):
         optimizer.step()
 
         # measure elapsed time
-        batch_time.update(time.time() - end)
+        print("iteration {} time: {} ms".format(i, (time.time() - end) * 1000))
         end = time.time()
 
-        if i % args.print_freq == 0:
-            
 
-            
 def train(train_loader, model, criterion, optimizer, epoch, args):
     if args.cupti:
         profile_train(train_loader, model, criterion, optimizer, epoch, args)
