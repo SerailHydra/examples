@@ -79,9 +79,9 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
 # arguments for cupti tracing
 parser.add_argument('--cupti', action='store_true',
                     help='Collect cupti traces')
-parser.add_argument('--profile-start', detault=10, type=int,
+parser.add_argument('--profile-start', default=10, type=int,
                     help='The first iteration when collecting profiling traces')
-parser.add_argument('--profile-stop', detault=60, type=int,
+parser.add_argument('--profile-stop', default=60, type=int,
                     help='The last iteration when collecting profiling traces')
 
 best_acc1 = 0
