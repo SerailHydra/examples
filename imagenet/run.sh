@@ -67,7 +67,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64
 # run training
 if [ $single_gpu = 1 ]; then
     echo "using single GPU"
-    SUFFIX="${SUFFIX} --num-minibatches 50"
+    #SUFFIX="${SUFFIX} --num-minibatches 50"
     export CUDA_VISIBLE_DEVICES=0
 fi
 
