@@ -18,6 +18,8 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
 
+from torch._C import start_cupti_tracing, end_cupti_tracing
+
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
     and callable(models.__dict__[name]))
@@ -73,6 +75,14 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
                          'N processes per node, which has N GPUs. This is the '
                          'fastest way to use PyTorch for either single node or '
                          'multi node data parallel training')
+
+# arguments for cupti tracing
+parser.add_argument('--cupti', action='store_true',
+                    help='Collect cupti traces')
+parser.add_argument('--profile-start', detault=10, type=int,
+                    help='The first iteration when collecting profiling traces')
+parser.add_argument('--profile-stop', detault=60, type=int,
+                    help='The last iteration when collecting profiling traces')
 
 best_acc1 = 0
 
@@ -260,7 +270,42 @@ def main_worker(gpu, ngpus_per_node, args):
             }, is_best)
 
 
+def profile_train(train_loader, model, criterion, optimizer, epoch, args):
+    # switch to train mode
+    model.train()
+
+    for i, (images, target) in enumerate(train_loader):
+        if i == args.profile_start:
+            start_cupti_tracing()
+        if i == args.profile_stop:
+            stop_cupti_tracing()
+            break
+            
+        if args.gpu is not None:
+            images = images.cuda(args.gpu, non_blocking=True)
+        target = target.cuda(args.gpu, non_blocking=True)
+
+        # compute output
+        output = model(images)
+        loss = criterion(output, target)
+
+        # compute gradient and do SGD step
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        # measure elapsed time
+        batch_time.update(time.time() - end)
+        end = time.time()
+
+        if i % args.print_freq == 0:
+            
+
+            
 def train(train_loader, model, criterion, optimizer, epoch, args):
+    if args.cupti:
+        profile_train(train_loader, model, criterion, optimizer, epoch, args)
+        return
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
