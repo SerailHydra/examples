@@ -279,7 +279,7 @@ def profile_train(train_loader, model, criterion, optimizer, epoch, args):
         if i == args.profile_start:
             start_cupti_tracing()
         if i == args.profile_stop:
-            stop_cupti_tracing()
+            end_cupti_tracing()
             break
             
         if args.gpu is not None:
