@@ -898,9 +898,6 @@ def main():
                         help='The last iteration when collecting profiling traces')
 
     args = parser.parse_args()
-    if args.cupti:
-        from torch._C import start_cupti_tracing, end_cupti_tracing
-
     profile_dir = args.profile_dir
 
     if args.world_size == 1 or args.no_cuda:
