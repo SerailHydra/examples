@@ -901,8 +901,6 @@ def main():
         from torch._C import start_cupti_tracing, end_cupti_tracing
 
     profile_dir = args.profile_dir
-    if not args.profile:
-        profile_dir = None
 
     if args.world_size == 1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
@@ -1045,10 +1043,7 @@ def main():
             train_sampler = RandomSampler(train_data)
         else:
             train_sampler = DistributedSampler(train_data)
-        if args.profile:
-            train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=args.train_batch_size, log_dir=profile_dir)
-        else:
-            train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=args.train_batch_size)
+        train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=args.train_batch_size)
 
         train_bert(model, train_dataloader, optimizer, n_gpu, device, args)
 
