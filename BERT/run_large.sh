@@ -66,7 +66,6 @@ fi
 $PREFIX run_squad.py \
   --bert_model bert-large-uncased \
   --do_train \
-  --do_predict \
   --do_lower_case \
   --train_file train-v1.1.json \
   --predict_file dev-v1.1.json \
