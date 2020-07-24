@@ -41,8 +41,6 @@ from pytorch_pretrained_bert.tokenization import (BasicTokenizer,
                                                   BertTokenizer,
                                                   whitespace_tokenize)
 
-sys.path.append(os.path.join(os.getcwd(), '..'))
-import torchmodules.torchprofiler as torchprofiler
 import time
 import numba.cuda as cuda
 
@@ -768,24 +766,23 @@ def _compute_softmax(scores):
         probs.append(score / total_sum)
     return probs
 
+
 def train_bert(model, train_dataloader, optimizer, n_gpu, device, args):
     global_step = 0
     model.train()
     for _ in trange(int(args.num_train_epochs), desc="Epoch"):
+        end = time.time()
         for step, batch in enumerate(tqdm(train_dataloader, desc="Iteration")):
-            if step == 1:
-               start = time.time()
-            if step == 10 and args.cupti:
+            if step == args.profile_start and args.cupti:
                 start_cupti_tracing()
-            if step >= args.num_minibatches and args.num_minibatches > 0:
+            if step == args.profile_stop and args.cupti:
+                end_cupti_tracing()
                 break
-            t0 = time.time()
+
             if n_gpu == 1:
                 batch = tuple(t.to(device) for t in batch) # multi-gpu does scattering it-self
             input_ids, input_mask, segment_ids, start_positions, end_positions = batch
-            t1 = time.time()
             loss = model(input_ids, segment_ids, input_mask, start_positions, end_positions)
-            t2 = time.time()
             if n_gpu > 1:
                 loss = loss.mean() # mean() to average on multi-gpu.
             if args.gradient_accumulation_steps > 1:
@@ -795,7 +792,6 @@ def train_bert(model, train_dataloader, optimizer, n_gpu, device, args):
                 optimizer.backward(loss)
             else:
                 loss.backward()
-            t3 = time.time()
             if (step + 1) % args.gradient_accumulation_steps == 0:
                 if args.fp16:
                     # modify learning rate with special warm up BERT uses
@@ -806,108 +802,11 @@ def train_bert(model, train_dataloader, optimizer, n_gpu, device, args):
                 optimizer.step()
                 optimizer.zero_grad()
                 global_step += 1
-            t5 = time.time()
-            print("iteration time: {}".format((t5 - t0) * 1000 * 1000))
-            print("breakdown: {} {} {} {}".format(t1 - t0, t2 - t1, t3 - t2, t5 - t3))
-        if args.num_minibatches > 0:
+
+                print("iteration {} time: {} ms".format(i, (time.time() - end) * 1000))
+            end = time.time()
+        if args.cupti:
             break
-    if args.cupti:
-        end_cupti_tracing()
-    print("per-iteration time = {} seconds".format((time.time() - start) / (args.num_minibatches - 1)))
-
-def profile_train_bert(model, train_dataloader, optimizer, n_gpu, device, args, log_dir):
-    global_step = 0
-    pid = os.getpid()
-    fflayer_timestamps = []
-    bplayer_timestamps = []
-    iteration_timestamps = []
-    timestamp_blobs = {}
-    timestamp_blobs["optimizer_step"] = []
-    timestamp_blobs["ffpass"] = []
-    timestamp_blobs["loss"] = []
-    timestamp_blobs["bppass"] = []
-    markers = []
-
-    model.train()
-    #torch.cuda.synchronize()
-    start = time.time()
-    #print("calibration time: {:.0f}, pid {}".format(start * 1000 * 1000 * 1000, pid))
-    for step, batch in enumerate(tqdm(train_dataloader, desc="Iteration")):
-        if step > args.num_minibatches:
-            break
-        if step == 10 and args.cupti:
-            start_cupti_tracing()
-        t0 = time.time()
-        if n_gpu == 1:
-            batch = tuple(t.to(device) for t in batch) # multi-gpu does scattering it-self
-        with torchprofiler.Profiling(model, mode="sync") as p:
-            input_ids, input_mask, segment_ids, start_positions, end_positions = batch
-            t1 = time.time()
-            loss = model(input_ids, segment_ids, input_mask, start_positions, end_positions)
-            t2 = time.time()
-            if n_gpu > 1:
-                loss = loss.mean() # mean() to average on multi-gpu.
-            if args.gradient_accumulation_steps > 1:
-                loss = loss / args.gradient_accumulation_steps
-
-            t3 = time.time()
-            if args.fp16:
-                optimizer.backward(loss)
-            else:
-                loss.backward()
-            t4 = time.time()
-            if (step + 1) % args.gradient_accumulation_steps == 0:
-                if args.fp16:
-                    # modify learning rate with special warm up BERT uses
-                    # if args.fp16 is False, BertAdam is used and handles this automatically
-                    lr_this_step = args.learning_rate * warmup_linear(global_step/num_train_optimization_steps, args.warmup_proportion)
-                    for param_group in optimizer.param_groups:
-                        param_group['lr'] = lr_this_step
-                optimizer.step()
-                optimizer.zero_grad()
-                global_step += 1
-            t5 = time.time()
-        print("iteration time: {}".format((t5 - t0) * 1000 * 1000))
-
-        if p.mode == "async":
-            markers.extend(p.marker)
-            markers.append(("BertAdam_UP", t4 * 1000 * 1000 * 1000, "start"))
-            markers.append(("BertAdam_UP", t5 * 1000 * 1000 * 1000, "stop"))
-            continue
-
-        fflayer_timestamps.append(p.processed_times_dir('forward'))
-        bplayer_timestamps.append(p.processed_times_dir('backward'))
-        timestamp_blobs["optimizer_step"].append({
-            "start": t4 * 1000 * 1000,
-            "duration": (t5 - t4) * 1000 * 1000,
-            "in_critical_path": True,
-            "pid": pid})
-        timestamp_blobs["ffpass"].append({
-            "start": t1 * 1000 * 1000,
-            "duration": (t2 - t1) * 1000 * 1000,
-            "in_critical_path": True,
-            "pid": pid})
-        timestamp_blobs["loss"].append({
-            "start": t2 * 1000 * 1000,
-            "duration": (t3 - t2) * 1000 * 1000,
-            "in_critical_path": True,
-            "pid": pid})
-        timestamp_blobs["bppass"].append({
-            "start": t3 * 1000 * 1000,
-            "duration": (t4 - t3) * 1000 * 1000,
-            "in_critical_path": True,
-            "pid": pid})
-        iteration_timestamps.append({
-            "start": t1 * 1000 * 1000,
-            "duration": (t5 - t1) * 1000 * 1000})
-    print("total time = {}".format(time.time() - start))
-    if args.cupti:
-        end_cupti_tracing()
-
-    torchprofiler.generate_json(0, args.num_minibatches - 1, fflayer_timestamps, bplayer_timestamps, iteration_timestamps, timestamp_blobs, output_filename=os.path.join(log_dir, "processed_time.{}.json".format(pid)))
-    #with open(os.path.join(log_dir, "marker.{}.txt".format(pid)), "w") as f:
-    #    for (func, t, tag) in markers:
-    #        f.write(unicode("{}\t{}\t{:.0f}\n".format(tag, func, t), "utf-8"))
 
 
 def main():
@@ -989,12 +888,13 @@ def main():
                         help="If null_score - best_non_null is greater than the threshold predict null.")
     parser.add_argument('--profile-dir', default="./profile", type=str,
                         help="Directory for dumping profiling data")
-    parser.add_argument('--profile', action='store_true',
-                        help="Profile passed in model")
-    parser.add_argument('--num-minibatches', default=300, type=int,
-                        help="number of minibatches to profile")
+    
     parser.add_argument('--cupti', action='store_true',
                         help="whether dumping cupti trace")
+    parser.add_argument('--profile-start', default=10, type=int,
+                        help='The first iteration when collecting profiling traces')
+    parser.add_argument('--profile-stop', default=15, type=int,
+                        help='The last iteration when collecting profiling traces')
 
     args = parser.parse_args()
     if args.cupti:
@@ -1150,12 +1050,7 @@ def main():
         else:
             train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=args.train_batch_size)
 
-        if args.profile:
-            profile_train_bert(model, train_dataloader, optimizer, n_gpu, device, args, profile_dir)
-            return
-        else:
-            train_bert(model, train_dataloader, optimizer, n_gpu, device, args)
-            return
+        train_bert(model, train_dataloader, optimizer, n_gpu, device, args)
 
     '''
     if args.do_train:
