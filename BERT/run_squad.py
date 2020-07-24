@@ -43,6 +43,7 @@ from pytorch_pretrained_bert.tokenization import (BasicTokenizer,
 
 import time
 import numba.cuda as cuda
+from torch._C import start_cupti_tracing, end_cupti_tracing
 
 if sys.version_info[0] == 2:
     import cPickle as pickle
