@@ -803,7 +803,7 @@ def train_bert(model, train_dataloader, optimizer, n_gpu, device, args):
                 optimizer.zero_grad()
                 global_step += 1
 
-                print("iteration {} time: {} ms".format(i, (time.time() - end) * 1000))
+            print("iteration {} time: {} ms".format(step, (time.time() - end) * 1000))
             end = time.time()
         if args.cupti:
             break
