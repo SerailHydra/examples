@@ -8,4 +8,6 @@ do
     fi
 done
 
+CUDA_VISIBLE_DEVICES=3
+
 $PREFIX main.py $SUFFIX
