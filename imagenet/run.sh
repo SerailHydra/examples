@@ -36,6 +36,7 @@ do
     fi
     if [ $var = "nsight" ]; then # turn on NeuralTap profile
         SUFFIX="${SUFFIX} --nsight"
+        PREFIX="/opt/nvidia/nsight-systems/2020.3.1/bin/nsys profile ${PREFIX}"
     fi
     if [ $var = "dist" ]; then
         single_gpu=0
