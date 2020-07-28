@@ -282,13 +282,17 @@ def profile_train(train_loader, model, criterion, optimizer, epoch, args):
     for i, (images, target) in enumerate(train_loader):
         if i == args.profile_start:
             if args.cupti:
+                print("start cupti profiling ...")
                 start_cupti_tracing()
             elif args.nsight:
+                print("start nsight profiling ...")
                 torch.cuda.profiler.start()
         if i == args.profile_stop:
             if args.cupti:
+                print("stop cupti profiling")
                 end_cupti_tracing()
             elif args.nsight:
+                print("stop nsight profiling")
                 torch.cuda.profiler.stop()
             break
             
