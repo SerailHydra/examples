@@ -79,6 +79,8 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
 # arguments for cupti tracing
 parser.add_argument('--cupti', action='store_true',
                     help='Collect cupti traces')
+parser.add_argument('--nsight', action='store_true',
+                    help='Collect nsight traces')
 parser.add_argument('--profile-start', default=10, type=int,
                     help='The first iteration when collecting profiling traces')
 parser.add_argument('--profile-stop', default=60, type=int,
@@ -277,9 +279,15 @@ def profile_train(train_loader, model, criterion, optimizer, epoch, args):
     end = time.time()
     for i, (images, target) in enumerate(train_loader):
         if i == args.profile_start:
-            start_cupti_tracing()
+            if args.cupti:
+                start_cupti_tracing()
+            elif args.nsight:
+                torch.cuda.profiler.start()
         if i == args.profile_stop:
-            end_cupti_tracing()
+            if args.cupti:
+                end_cupti_tracing()
+            elif args.nsight:
+                torch.cuda.profiler.stop()
             break
             
         if args.gpu is not None:
@@ -301,7 +309,7 @@ def profile_train(train_loader, model, criterion, optimizer, epoch, args):
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
-    if args.cupti:
+    if args.cupti or args.nsight:
         profile_train(train_loader, model, criterion, optimizer, epoch, args)
         return
     batch_time = AverageMeter('Time', ':6.3f')
