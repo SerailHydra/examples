@@ -139,6 +139,10 @@ class Seq2SeqTrainer(object):
             assert self.optimizer is not None
         batch_size = data_loader.batch_size
 
+        losses_per_token = AverageMeter()
+        loss_per_sentence = AverageMeter()
+        num_toks = AverageMeter()
+        
         start_time = 0
         end_time = 0
         for i, (src, tgt, _) in enumerate(data_loader):
