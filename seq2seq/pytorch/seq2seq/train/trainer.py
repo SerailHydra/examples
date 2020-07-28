@@ -34,7 +34,6 @@ class Seq2SeqTrainer(object):
                  distributed=False,
                  verbose=False,
                  log_dir=None,
-                 cupti=False,
                  ps=False,
                  world_size=1,
                  rank=0,
@@ -138,19 +137,10 @@ class Seq2SeqTrainer(object):
     def feed_data(self, data_loader, training=True):
         if training:
             assert self.optimizer is not None
-        batch_time = AverageMeter()
-        data_time = AverageMeter()
-        losses_per_token = AverageMeter()
-        losses_per_sentence = AverageMeter()
-
-        tot_tok_time = AverageMeter()
-        src_tok_time = AverageMeter()
-        tgt_tok_time = AverageMeter()
-
         batch_size = data_loader.batch_size
 
-        end = time.time()
         start_time = 0
+        end_time = 0
         for i, (src, tgt, _) in enumerate(data_loader):
             print("iteration {}".format(i))
             if i == self.profile_start and self.cupti:
@@ -165,7 +155,6 @@ class Seq2SeqTrainer(object):
                 break
             self.save_counter += 1
             # measure data loading time
-            data_time.update(time.time() - end)
 
             # do a train/evaluate iteration
             stats = self.iterate(src, tgt, training=training)
