@@ -34,11 +34,14 @@ class Seq2SeqTrainer(object):
                  distributed=False,
                  verbose=False,
                  log_dir=None,
-                 num_minibatches=20,
                  cupti=False,
                  ps=False,
                  world_size=1,
-                 rank=0):
+                 rank=0,
+                 cupti=False,
+                 nsight=False,
+                 profile_start=10,
+                 profile_stop=50):
         super(Seq2SeqTrainer, self).__init__()
         self.model = model
         self.criterion = criterion
@@ -56,13 +59,18 @@ class Seq2SeqTrainer(object):
         self.batch_first = batch_first
         self.verbose = verbose
         self.loss = None
-        self.cupti = cupti
+
         self.ps = ps
         self.world_size = world_size
         self.rank = rank
         
         self.math = math
         self.grad_clip = grad_clip
+
+        self.cupti = cupti
+        self.nsight = nsight
+        self.profile_start = profile_start
+        self.profile_stop = profile_stop
 
         if cuda:
             self.model = self.model.cuda()
