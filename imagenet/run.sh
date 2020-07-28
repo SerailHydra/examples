@@ -34,8 +34,8 @@ do
     if [ $var = "nvprof" ]; then # use nvprof, cannot coexist with cupti
         nvprof_on=1
     fi
-    if [ $var = "profile" ]; then # turn on NeuralTap profile
-        SUFFIX="${SUFFIX} --profile"
+    if [ $var = "nsight" ]; then # turn on NeuralTap profile
+        SUFFIX="${SUFFIX} --nsight"
     fi
     if [ $var = "dist" ]; then
         single_gpu=0
@@ -67,8 +67,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64
 # run training
 if [ $single_gpu = 1 ]; then
     echo "using single GPU"
-    #SUFFIX="${SUFFIX} --num-minibatches 50"
-    export CUDA_VISIBLE_DEVICES=0
+    export CUDA_VISIBLE_DEVICES=3
 fi
 
 $PREFIX main.py -a resnet50 -b 32 -j 4 $DATASET_DIR $SUFFIX 2>&1 |tee log
