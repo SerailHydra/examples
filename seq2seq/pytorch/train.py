@@ -346,16 +346,9 @@ def main():
 
         trainer.epoch = epoch
         train_loss = trainer.optimize(train_loader)
-        if args.profile:
-            if args.cuda:
-                break_training = torch.cuda.LongTensor([0])
-            else:
-                break_training = torch.LongTensor([0])
-            print("profiling finished...")
-            break
-
         if args.cupti or args.nsight:
             break
+            
         # evaluate on validation set
         if args.rank == 0 and not args.disable_eval:
             logging.info('Running validation on dev set')
