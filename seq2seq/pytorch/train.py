@@ -102,9 +102,9 @@ def parse_args():
 
     bucketing_parser = training.add_mutually_exclusive_group(required=False)
     bucketing_parser.add_argument('--bucketing', dest='bucketing', action='store_true',
-                             help='enables bucketing (use \'--no-bucketing\' to disable)')
+                                  help='enables bucketing (use \'--no-bucketing\' to disable)')
     bucketing_parser.add_argument('--no-bucketing', dest='bucketing', action='store_false',
-                             help=argparse.SUPPRESS)
+                                  help=argparse.SUPPRESS)
     bucketing_parser.set_defaults(bucketing=True)
 
     # validation
@@ -117,13 +117,13 @@ def parse_args():
                             help='minimum sequence length for validation')
 
     validation.add_argument('--beam-size', default=5, type=int,
-                        help='beam size')
+                            help='beam size')
     validation.add_argument('--len-norm-factor', default=0.6, type=float,
-                        help='length normalization factor')
+                            help='length normalization factor')
     validation.add_argument('--cov-penalty-factor', default=0.1, type=float,
-                        help='coverage penalty factor')
+                            help='coverage penalty factor')
     validation.add_argument('--len-norm-const', default=5.0, type=float,
-                        help='length normalization constant')
+                            help='length normalization constant')
 
 
     # checkpointing
@@ -278,7 +278,6 @@ def main():
         cuda=args.cuda,
         distributed=distributed,
         log_dir=profile_dir,
-        cupti=args.cupti,
         ps=args.ps,
         world_size=args.world_size,
         rank=args.rank,
