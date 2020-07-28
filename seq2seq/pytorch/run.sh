@@ -77,8 +77,6 @@ if [ $single_gpu = 1 ]; then
     export CUDA_VISIBLE_DEVICES=3
 fi
 
-export CUDA_VISIBLE_DEVICES=0,1
-
 $PREFIX train.py \
   --save ${RESULTS_DIR} \
   --dataset-dir ${DATASET_DIR} \
