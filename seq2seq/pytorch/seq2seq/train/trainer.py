@@ -176,7 +176,6 @@ class Seq2SeqTrainer(object):
         print("average time {:.2f} ms".format((end_time - start_time) * 1000 / (self.profile_stop - self.profile_start)))
         return losses_per_token.avg
 
-
     def preallocate(self, data_loader, training):
         batch_size = data_loader.batch_size
         max_len = data_loader.dataset.max_len
