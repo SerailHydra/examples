@@ -145,8 +145,8 @@ class Seq2SeqTrainer(object):
         
         start_time = 0
         end_time = 0
+        t0 = time.time()
         for i, (src, tgt, _) in enumerate(data_loader):
-            print("iteration {}".format(i))
             if i == self.profile_start and self.cupti:
                 start_cupti_tracing()
             if i == self.profile_start:
@@ -173,6 +173,9 @@ class Seq2SeqTrainer(object):
                     with sync_workers() as rank:
                         if rank == 0:
                             self.save(identifier=identifier)
+            t1 = time.time()
+            print("iteration {}: {} ms".format(i, (t1 - t0) * 1000))
+            t0 = t1
         print("average time {:.2f} ms".format((end_time - start_time) * 1000 / (self.profile_stop - self.profile_start)))
         return losses_per_token.avg
 
