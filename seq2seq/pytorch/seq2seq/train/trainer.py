@@ -17,6 +17,7 @@ from seq2seq.utils import AverageMeter
 from seq2seq.utils import sync_workers
 
 from torch.nn.utils import clip_grad_norm_
+from torch._C import start_cupti_tracing, end_cupti_tracing
 
 class Seq2SeqTrainer(object):
 
