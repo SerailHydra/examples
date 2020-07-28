@@ -281,7 +281,12 @@ def main():
         cupti=args.cupti,
         ps=args.ps,
         world_size=args.world_size,
-        rank=args.rank)
+        rank=args.rank,
+        cupti=args.cupti,
+        nsight=args.nsight,
+        profile_start=args.profile_start,
+        profile_stop=args.profile_stop
+    )
 
     trainer_options['model'] = model
     trainer = trainers.Seq2SeqTrainer(**trainer_options)
