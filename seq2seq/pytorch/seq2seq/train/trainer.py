@@ -145,9 +145,9 @@ class Seq2SeqTrainer(object):
             print("iteration {}".format(i))
             if i == self.profile_start and self.cupti:
                 start_cupti_tracing()
-            if i == args.profile_start:
+            if i == self.profile_start:
                 start_time = time.time()
-            if i == args.profile_stop:
+            if i == self.profile_stop:
                 end_time = time.time()
             if i == self.profile_stop and self.cupti:
                 end_cupti_tracing()
