@@ -68,7 +68,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64
 # run training
 if [ $single_gpu = 1 ]; then
     echo "using single GPU"
-    export CUDA_VISIBLE_DEVICES=3
+    export CUDA_VISIBLE_DEVICES=1
 fi
 
 $PREFIX main.py -a resnet50 -b 32 -j 4 $DATASET_DIR $SUFFIX 2>&1 |tee log
