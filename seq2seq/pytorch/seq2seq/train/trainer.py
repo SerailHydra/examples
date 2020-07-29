@@ -153,10 +153,10 @@ class Seq2SeqTrainer(object):
                     start_cupti_tracing()
                 elif self.nsight:
                     torch.cuda.profiler.start()
-            if i == self.profile_start:
                 start_time = time.time()
 
             if i == self.profile_stop:
+                end_time = time.time()
                 if self.cupti:
                     end_cupti_tracing()
                 elif self.nsight:
