@@ -29,8 +29,9 @@ do
     if [ $var = "nvprof" ]; then # use nvprof, cannot coexist with cupti
         nvprof_on=1
     fi
-    if [ $var = "profile" ]; then # turn on NeuralTap profile
-        SUFFIX="${SUFFIX} --profile"
+    if [ $var = "nsight" ]; then # turn on NeuralTap profile
+        SUFFIX="${SUFFIX} --nsight"
+        PREFIX="/opt/nvidia/nsight-systems/2020.3.1/bin/nsys profile ${PREFIX}"
     fi
     if [ $var = "dist" ]; then
         single_gpu=0
