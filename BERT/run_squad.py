@@ -774,10 +774,16 @@ def train_bert(model, train_dataloader, optimizer, n_gpu, device, args):
     for _ in trange(int(args.num_train_epochs), desc="Epoch"):
         end = time.time()
         for step, batch in enumerate(tqdm(train_dataloader, desc="Iteration")):
-            if step == args.profile_start and args.cupti:
-                start_cupti_tracing()
-            if step == args.profile_stop and args.cupti:
-                end_cupti_tracing()
+            if step == args.profile_start:
+                if args.cupti:
+                    start_cupti_tracing()
+                elif args.nsight:
+                    torch.cuda.profiler.start()
+            if step == args.profile_stop:
+                if args.cupti:
+                    end_cupti_tracing()
+                elif args.nsight:
+                    torch.cuda.profiler.stop()
                 break
 
             if n_gpu == 1:
@@ -806,7 +812,7 @@ def train_bert(model, train_dataloader, optimizer, n_gpu, device, args):
 
             print("iteration {} time: {} ms".format(step, (time.time() - end) * 1000))
             end = time.time()
-        if args.cupti:
+        if args.cupti or args.nsight:
             break
 
 
@@ -891,7 +897,9 @@ def main():
                         help="Directory for dumping profiling data")
     
     parser.add_argument('--cupti', action='store_true',
-                        help="whether dumping cupti trace")
+                        help="whether dumping cupti traces")
+    parser.add_argument('--nsight', action='store_true',
+                        help="whether dumping nsight traces")
     parser.add_argument('--profile-start', default=10, type=int,
                         help='The first iteration when collecting profiling traces')
     parser.add_argument('--profile-stop', default=15, type=int,
