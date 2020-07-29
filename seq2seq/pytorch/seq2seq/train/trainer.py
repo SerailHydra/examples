@@ -148,14 +148,20 @@ class Seq2SeqTrainer(object):
         end_time = 0
         t0 = time.time()
         for i, (src, tgt, _) in enumerate(data_loader):
-            if i == self.profile_start and self.cupti:
-                start_cupti_tracing()
+            if i == self.profile_start:
+                if self.cupti:
+                    start_cupti_tracing()
+                elif self.nsight:
+                    torch.cuda.profiler.start()
             if i == self.profile_start:
                 start_time = time.time()
+
             if i == self.profile_stop:
-                end_time = time.time()
-            if i == self.profile_stop and self.cupti:
-                end_cupti_tracing()
+                if self.cupti:
+                    end_cupti_tracing()
+                elif self.nsight:
+                    torch.cuda.profiler.stop()
+
             if i == self.profile_stop:
                 break
             self.save_counter += 1
