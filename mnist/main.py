@@ -7,6 +7,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 
+from torch._C import start_cupti_tracing, end_cupti_tracing
 
 class Net(nn.Module):
     def __init__(self):
@@ -37,8 +38,23 @@ class Net(nn.Module):
 def train(args, model, device, train_loader, optimizer, epoch):
     model.train()
     import time
-    start = time.time()
+    #start = time.time()
     for batch_idx, (data, target) in enumerate(train_loader):
+        if batch_idx == args.profile_start:
+            if args.cupti:
+                start_cupti_tracing()
+            elif args.nsight:
+                torch.cuda.profiler.start()
+            start_time = time.time()
+
+        if batch_idx == args.profile_stop:
+            end_time = time.time()
+            if args.cupti:
+                end_cupti_tracing()
+            elif args.nsight:
+                torch.cuda.profiler.stop()
+            break
+
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
@@ -49,8 +65,9 @@ def train(args, model, device, train_loader, optimizer, epoch):
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
-    stop = time.time()
-    print("epoch time: {} ms".format((stop - start) * 1000))
+    print("Average iteration time: {} ms".format((end_time - start_time) / (args.profile_stop - args.profile_start)))
+    #stop = time.time()
+    #print("epoch time: {} ms".format((stop - start) * 1000))
 
 
 def test(model, device, test_loader):
@@ -93,6 +110,16 @@ def main():
                         help='how many batches to wait before logging training status')
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
+    
+    parser.add_argument('--cupti', action='store_true', default=False,
+                        help='whether dumping CUPTI traces')
+    parser.add_argument('--nsight', action='store_true', default=False,
+                        help='whether dumping nsight-system traces')
+    parser.add_argument('--profile-start', type=int, default=50, metavar='N',
+                        help='The first iteration when collecting profiling traces')
+    parser.add_argument('--profile-stop', type=int, default=550, metavar='N',
+                        help='The last iteration when collecting profiling traces')
+    
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
 
