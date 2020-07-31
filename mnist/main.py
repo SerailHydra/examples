@@ -40,6 +40,7 @@ def train(args, model, device, train_loader, optimizer, epoch):
     import time
     #start = time.time()
     for batch_idx, (data, target) in enumerate(train_loader):
+        print(batch_idx)
         if batch_idx == args.profile_start:
             if args.cupti:
                 start_cupti_tracing()
