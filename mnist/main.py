@@ -40,7 +40,6 @@ def train(args, model, device, train_loader, optimizer, epoch):
     import time
     #start = time.time()
     for batch_idx, (data, target) in enumerate(train_loader):
-        print(batch_idx)
         if batch_idx == args.profile_start:
             if args.cupti:
                 start_cupti_tracing()
@@ -107,7 +106,7 @@ def main():
                         help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+    parser.add_argument('--log-interval', type=int, default=50, metavar='N',
                         help='how many batches to wait before logging training status')
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
@@ -118,7 +117,7 @@ def main():
                         help='whether dumping nsight-system traces')
     parser.add_argument('--profile-start', type=int, default=50, metavar='N',
                         help='The first iteration when collecting profiling traces')
-    parser.add_argument('--profile-stop', type=int, default=550, metavar='N',
+    parser.add_argument('--profile-stop', type=int, default=250, metavar='N',
                         help='The last iteration when collecting profiling traces')
     
     args = parser.parse_args()
